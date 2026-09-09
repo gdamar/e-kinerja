@@ -1,0 +1,49 @@
+{
+  "name": "E-Kinerja",
+  "short_name": "E-Kinerja",
+  "id": "/",
+  "description": "Sistem Tracking Produktivitas PHL",
+  "theme_color": "#0F766E",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "lang": "id",
+  "categories": ["productivity", "business"],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-desktop.png",
+      "type": "image/png",
+      "sizes": "640x360",
+      "form_factor": "wide",
+      "label": "Dashboard E-Kinerja"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "type": "image/png",
+      "sizes": "360x640",
+      "form_factor": "narrow",
+      "label": "Tampilan Mobile"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
