@@ -1,11 +1,36 @@
 # Spesifikasi halaman Pengajuan Banding untuk Nilai Petugas
+Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh Operator dan Petugas. Halaman ini akan berupa form dengan tambahan label yang berisi informasi nilai saat ini di atasnya.
 
-## Deskripsi
+> [!NOTE]
+> **Keputusan Desain Terkait Input Ekspektasi Nilai:**
+> Field input ekspektasi/estimasi skor dari petugas ditiadakan dari form pengajuan banding dengan pertimbangan:
+> 1. **Mencegah ekspektasi keliru (false expectation):** Jika petugas mengajukan angka tertentu (misal 90) namun operator memutuskan angka yang berbeda (misal 75), hal ini dapat memicu kekecewaan baru meskipun nilainya sudah dinaikkan.
+> 2. **Objektivitas penilaian:** Petugas belum tentu mengetahui standar nilai yang proporsional/adil secara sistemik, sehingga kewajiban input angka hanya menambah beban (friction) saat pengisian formulir.
+> 3. **Otoritas penuh penilai:** Penentuan keputusan dan besaran skor akhir sepenuhnya merupakan wewenang Operator berdasarkan validasi bukti dan catatan yang diajukan. Operator tetap memiliki visibilitas atas nilai awal dan bukti pendukung saat melakukan peninjauan.
 
-Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh Kepala Seksi dan Petugas. Halaman ini akan berupa form dengan tambahan label yang berisi informasi nilai saat ini di atasnya.
+## Struktur Interface dan Type  
 
+```typescript
+export type StatusBanding = 'Menunggu' | 'Disetujui' | 'Ditangguhkan' | 'Ditolak';
+
+export interface PenilaianBanding {
+  id: string;
+  id_penilaian: string;
+  alasan: string;
+  lampiran_url?: string | null;
+  status: StatusBanding;
+  catatan_operator?: string | null;
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
+// Update interface Penilaian yang sudah ada:
+export interface PenilaianDetail extends Penilaian {
+  banding?: PenilaianBanding[];
+}
+
+```
 ## Role yang terlibat
-
 - Petugas
 - Operator
 
@@ -28,7 +53,7 @@ Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh
 - Terdapat tombol disetujui(tombol dengan icon check dan background hijau) dan ditolak(tombol dengan icon x dan background merah)di kolom aksi pada tabel
 - Jika tombol disetuji diklik maka akan muncul modal yang berisi form dengan komposisi field yang tertera pada Section Komponen UI untuk Operator
 - Jika tombol ditolak diklik maka akan muncul modal yang berisi form dengan komposisi field yang tertera pada Section Komponen UI untuk Operator
-- Operator dapat menyetujui atau menolak pengajuan disertai dengan alasan
+- Operator dapat menyetujui atau menolak pengajuan disertai dengan catatan
 - Jika disetujui maka nilai petugas pada halaman penilaian akan diupdate dan petugas dapat melihat hasil penilaian baru yang telah disetujui
 - Jika ditolak nilai pada halaman penilaian tetap sama seperti nilai awal sebelum pengajuan
 - Data pengajuan yang telah menerima status persetujuan(telah ditinjau) tidak akan tampil di halaman utama pengajuan banding
@@ -44,25 +69,14 @@ Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh
   - Tipe Data: integer/number
 - Form Pengajuan
   - Deskripsi: Berupa Form input yang memuat informasi pengajuan sebagai berikut:
-    - Alasan pengajuan
-      - Deskripsi: Berfungsi sebagai input alasan pengajuan
+    - catatan pengajuan
+      - Deskripsi: Berfungsi sebagai input catatan pengajuan
       - Tipe Data: text
-    - Estimasi penilaian yang diharapkan:
-      - Skor Displin Kehadiran
-        - Deskripsi: Sebagai input skor disiplin Kehadiran
-        - Tipe Data: integer/number
-      - Skor Tanggung Jawab
-        - Deskripsi: Sebagai input skor tanggung jawab
-        - Tipe Data: integer/number
-      - Skor Kepatuhan
-        - Deskripsi: Sebagai input skor kepatuhan
-        - Tipe Data: integer/number
+    - Lampiran
+      - Deskripsi: Komponen dropzone yang akan menampung lampiran file dengan format gambar(jpg dan png) maupun dokumen(pdf) sebagai bukti pendukung pengajuan
+      - Fungsi: Menampung file lampiran yang akan disimpan di storage
+      - Tipe Data: file
   - Fungsi Komponen: Form yang digunakan petugas untuk mengisi informasi tentang pengajuan
-- Lampiran
-  - Deskripsi: Komponen dropzone yang akan menampung lampiran file dengan format gambar(jpg dan png) maupun dokumen(pdf) sebagai bukti pendukung pengajuan
-  - Fungsi: Menampung file lampiran yang akan disimpan di storage
-  - Tipe Data: file
-
 ### Operator
 
 #### Halaman Utama
@@ -73,7 +87,7 @@ Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh
     - Skor Displin Kehadiran: integer/number
     - Skor Tanggung Jawab: integer/number
     - Skor Kepatuhan: integer/number
-    - Alasan Pengajuan: text(elipsis apabila jumlah karakter pada text melebihi lebar kolom)
+    - catatan Pengajuan: text(elipsis apabila jumlah karakter pada text melebihi lebar kolom)
     - Lampiran: button yang akan memunculkan modal preview dokumen lampiran
     - Waktu Pengajuan dibuat(Datetime)
   - Fungsi: Untuk menampilkan daftar pengajuan yang belum ditinjau
@@ -81,12 +95,12 @@ Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh
 #### Modal Form Disetujui
 
 - Input komponen nilai yang diajukan
-  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan ekspektasi nilai dari tiga komponen penilaian yang diajukan petugas. Berikut daftar komponen penilaian yang dimaksud:
+  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan nilai awal dari tiga komponen penilaian yang diajukan petugas. Berikut daftar komponen penilaian yang dimaksud:
     - Skor Displin Kehadiran
     - Skor Tanggung Jawab
     - Skor Kepatuhan
-- Input alasan pengajuan
-  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan alasan pengajuan yang diajukan petugas
+- Input catatan pengajuan
+  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan catatan pengajuan yang diajukan petugas
   - Tipe data: text
 - Input lampiran
   - Deskripsi: Berupa clickable thumbnail yang jika diklik akan memunculkan modal preview untuk meninjau dokumen dengan lebih detail.
@@ -96,14 +110,29 @@ Halaman ini merupakan fitur turunan dari penilaian yang hanya dapat diakses oleh
   - Deskripsi: Berupa tombol submit untuk menyimpan perubahan nilai dan status pengajuan
 
 #### Modal Form Ditolak
-
 - Input komponen nilai yang diajukan
-  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan ekspektasi nilai dari tiga komponen penilaian yang diajukan petugas. Berikut daftar komponen penilaian yang dimaksud:
+  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan nilai awal dari tiga komponen penilaian yang diajukan petugas. Berikut daftar komponen penilaian yang dimaksud:
     - Skor Displin Kehadiran
     - Skor Tanggung Jawab
     - Skor Kepatuhan
-- Input alasan pengajuan
-  - Deskripsi: Berupa input field dengan properties disabled yang menampilkan alasan pengajuan yang diajukan petugas
+- Input catatan pengajuan
+  - Deskripsi: Berupa input field aktif yang memasukkan catatan penolakan yang wajib diisi oleh Operator
   - Tipe data: text
 - Tombol submit
   - Deskripsi: Berupa tombol submit untuk menyimpan perubahan nilai dan status pengajuan
+
+## Struktur tabel
+
+### Tabel penilaian_banding
+
+| Nama field | Tipe data |
+| :---: | :---: |
+| id | uuid |
+| id_penilaian | fk_penilaian |
+| catatan_petugas | text(not null) |
+| catatan_operator | text(nullable) |
+| lampiran_url | varchar(berisi url storage, nullable) |
+| status | enum('Menunggu', 'Disetujui', 'Ditangguhkan') |
+| created_at | datetime |
+| reviewed_at | datetime |
+
