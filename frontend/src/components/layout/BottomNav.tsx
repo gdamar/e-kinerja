@@ -14,7 +14,7 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface border-t z-50 safe-area-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface border-t z-50 safe-area-bottom ">
       <div className="grid grid-cols-4 h-full">
         {navItems.map(item => {
           const Icon = item.icon;

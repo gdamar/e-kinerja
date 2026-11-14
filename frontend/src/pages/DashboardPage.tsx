@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, CheckCircle2, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,14 +17,28 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
 
-  // Fetch stats
   const { data: stats, isLoading: isLoadingStats } = useDashboardStats();
 
-  // Fetch today's tasks
-  const today = new Date().toISOString().split('T')[0];
-  const { data: todaysTugas, isLoading: isLoadingTugas } = useTugasList({
+  const today = useMemo(() => {
+    const now = new Date(Date.now());
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const { data: rawTodaysTugas, isLoading: isLoadingTugas } = useTugasList({
     tanggal: today,
   });
+
+  const todaysTugas = useMemo(() => {
+    if (!rawTodaysTugas) return [];
+    return rawTodaysTugas.filter((tugas) => {
+      if (!tugas.tanggal_tugas) return false;
+      const taskDate = tugas.tanggal_tugas.split('T')[0].trim();
+      return taskDate === today;
+    });
+  }, [rawTodaysTugas, today]);
 
   const isPetugas = profile?.role?.nama_role === 'petugas';
   const isKepalasesi = profile?.role?.nama_role === 'kepala_sesi';

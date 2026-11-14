@@ -18,7 +18,10 @@ import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import type { StatusTugas } from '@/types';
-
+/* 
+ *BUG: Card list tugas overlap sama bottom navbar
+ *BUG: Hasil search belum ke filter
+ * */
 export default function TugasListPage() {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -53,7 +56,7 @@ export default function TugasListPage() {
   const isOperator = profile?.role?.role_code === ROLE_CODES.OPERATOR || profile?.role?.role_code === ROLE_CODES.KEPALA_SESI;
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6 h-[calc(100dvh-4rem)] lg:h-dvh overflow-y-auto">
       <PageHeader
         title="Daftar Tugas"
         actions={

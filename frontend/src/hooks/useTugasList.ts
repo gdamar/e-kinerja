@@ -27,15 +27,32 @@ export function useTugasList(options: UseTugasListOptions = {}) {
         const junctionTaskIds = junctionData?.map(j => j.id_tugas) || [];
 
         // Query tugas_header with both direct assignment and junction table
-        const { data, error } = await supabase
+        let query = supabase
           .from('tugas_header')
           .select(`
             *,
             petugas:master_petugas(*)
           `)
-          .or(`id_petugas.eq.${profile.id},id.in.(${junctionTaskIds.join(',')})`)
           .order('tanggal_tugas', { ascending: false })
           .order('created_at', { ascending: false });
+
+        query = junctionTaskIds.length
+          ? query.or(`id_petugas.eq.${profile.id},id.in.(${junctionTaskIds.join(',')})`)
+          : query.eq('id_petugas', profile.id);
+
+        if (options.status) {
+          query = query.eq('status_tugas', options.status);
+        }
+
+        if (options.tanggal) {
+          query = query.eq('tanggal_tugas', options.tanggal);
+        }
+
+        if (options.search) {
+          query = query.ilike('judul_tugas', `%${options.search}%`);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         return data as TugasHeader[];

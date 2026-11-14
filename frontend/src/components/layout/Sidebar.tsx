@@ -60,7 +60,7 @@ export function Sidebar() {
     <TooltipProvider>
       <aside
         className={cn(
-          'hidden md:flex flex-col h-screen bg-surface border-r transition-all duration-300',
+          'hidden md:flex flex-col bg-surface h-screen transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-60'
         )}
       >
@@ -73,7 +73,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-2 space-y-1">
+        <nav className="flex-1 py-4 px-2 space-y-1 sticky">
           {filteredNavItems.map(item => {
             const Icon = item.icon;
             const isActive = location.pathname.startsWith(item.path);
