@@ -1,9 +1,8 @@
 import { MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn, formatDateShort, statusToVariant } from '@/lib/utils';
+import { formatDateShort, statusToVariant } from '@/lib/utils';
 import type { TugasHeader } from '@/types';
-import { STATUS_TUGAS } from '@/lib/constants';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Filter, ClipboardList, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import type { StatusTugas } from '@/types';
 /* 
  *BUG: Card list tugas overlap sama bottom navbar
  *BUG: Hasil search belum ke filter
+  BUG: Daftar tugas belum difilter berdasarkan petugas yang diassign
  * */
 export default function TugasListPage() {
   const navigate = useNavigate();
@@ -45,6 +46,17 @@ export default function TugasListPage() {
     status: statusFilter || undefined,
   });
 
+  console.log('[TugasListPage] request state', {
+    profileId: profile?.id,
+    profileEmail: profile?.email,
+    roleId: profile?.role_id,
+    roleName: profile?.role?.nama_role,
+    isLoading,
+    tugasCount: tugas?.length ?? 0,
+    tugasIds: tugas?.map((item) => item.id) ?? [],
+    tugasPetugasIds: tugas?.map((item) => item.id_petugas) ?? [],
+  });
+
   // Group by date
   const groupedTugas = tugas?.reduce((acc, t) => {
     const date = t.tanggal_tugas;
@@ -56,7 +68,7 @@ export default function TugasListPage() {
   const isOperator = profile?.role?.role_code === ROLE_CODES.OPERATOR || profile?.role?.role_code === ROLE_CODES.KEPALA_SESI;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 h-[calc(100dvh-4rem)] lg:h-dvh overflow-y-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Daftar Tugas"
         actions={

@@ -19,11 +19,12 @@ type FormData = z.infer<typeof schema>;
 
 interface TugasLogFormProps {
   tugasId: string;
+  petugasId?: string;
   tahap: TahapanTugas;
   onSuccess: () => void;
 }
 
-export function TugasLogForm({ tugasId, tahap, onSuccess }: TugasLogFormProps) {
+export function TugasLogForm({ tugasId, petugasId, tahap, onSuccess }: TugasLogFormProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);
   const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
@@ -57,6 +58,7 @@ export function TugasLogForm({ tugasId, tahap, onSuccess }: TugasLogFormProps) {
     try {
       await submitLog.mutateAsync({
         tugasId,
+        petugasId,
         data: {
           tahapan: tahap,
           deskripsi: data.deskripsi,
@@ -65,9 +67,15 @@ export function TugasLogForm({ tugasId, tahap, onSuccess }: TugasLogFormProps) {
         coordinates,
       });
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error submitting log:', err);
-      alert('Gagal menyimpan laporan');
+      const errObj = err as Record<string, unknown> | null;
+      const errorMsg =
+        (err as Error)?.message ||
+        (errObj?.error_description as string) ||
+        (errObj?.message as string) ||
+        (typeof err === 'object' ? JSON.stringify(err) : String(err));
+      alert(`Gagal menyimpan laporan: ${errorMsg}`);
     } finally {
       setIsSubmittingLocal(false);
     }
@@ -76,7 +84,7 @@ export function TugasLogForm({ tugasId, tahap, onSuccess }: TugasLogFormProps) {
   const isSubmitting = isSubmittingLocal || submitLog.isPending;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 overflow-x-auto">
       {/* Tahap Info */}
       <div className="bg-primary/10 rounded-lg p-3">
         <p className="text-sm font-medium text-primary">Tahapan: {tahap}</p>

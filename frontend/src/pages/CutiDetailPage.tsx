@@ -45,7 +45,7 @@ export default function CutiDetailPage() {
   const duration = calculateDuration(cuti.tgl_mulai, cuti.tgl_selesai);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       {/* Back button */}
       <Button variant="ghost" onClick={() => navigate(ROUTES.CUTI)}>
         <ArrowLeft className="h-4 w-4 mr-2" />

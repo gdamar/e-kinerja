@@ -37,17 +37,24 @@ export interface TugasHeader {
   created_at: string;
   petugas?: MasterPetugas;
   logs?: TugasLog[];
+  individual_status?: StatusTugas;
+}
+
+export interface PetugasWithStatus extends MasterPetugas {
+  status_tugas?: StatusTugas;
 }
 
 export interface TugasLog {
   id: string;
   id_tugas: string;
+  id_petugas?: string;
   tahapan: TahapanTugas;
   latitude: number;
   longitude: number;
   deskripsi: string;
-  url_foto: string;
+  url_foto: string | string[];
   created_at: string;
+  petugas?: MasterPetugas;
 }
 
 export interface Cuti {

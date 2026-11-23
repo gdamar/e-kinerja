@@ -29,21 +29,21 @@ export function useCreateTugas() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) throw new Error(`Simpan tugas_header gagal: ${error.message}`);
 
-      // 2. Insert into junction table for all selected petugas
-      if (data.id_petugas.length > 1) {
-        const junctionRecords = data.id_petugas.slice(1).map((petugasId) => ({
-          id_tugas: result.id,
-          id_petugas: petugasId,
-        }));
+      // 2. Store ALL petugas in the junction table (including the primary petugas).
+      // This ensures all assigned members have an individual progress record in tugas_petugas.
+      const junctionRecords = data.id_petugas.map((petugasId) => ({
+        id_tugas: result.id,
+        id_petugas: petugasId,
+        status_tugas: 'Menunggu' as const,
+      }));
 
-        const { error: junctionError } = await supabase
-          .from('tugas_petugas')
-          .insert(junctionRecords);
+      const { error: junctionError } = await supabase
+        .from('tugas_petugas')
+        .upsert(junctionRecords, { onConflict: 'id_tugas,id_petugas' });
 
-        if (junctionError) throw junctionError;
-      }
+      if (junctionError) throw new Error(`Simpan tugas_petugas gagal: ${junctionError.message}`);
 
       return result;
     },
@@ -79,19 +79,18 @@ export function useUpdateTugas() {
 
       if (deleteError) throw deleteError;
 
-      // 3. Insert new junction records (for petugas beyond the first)
-      if (data.id_petugas.length > 1) {
-        const junctionRecords = data.id_petugas.slice(1).map((petugasId) => ({
-          id_tugas: tugasId,
-          id_petugas: petugasId,
-        }));
+      // 3. Insert ALL assigned petugas into the junction table
+      const junctionRecords = data.id_petugas.map((petugasId) => ({
+        id_tugas: tugasId,
+        id_petugas: petugasId,
+        status_tugas: 'Menunggu' as const,
+      }));
 
-        const { error: junctionError } = await supabase
-          .from('tugas_petugas')
-          .insert(junctionRecords);
+      const { error: junctionError } = await supabase
+        .from('tugas_petugas')
+        .insert(junctionRecords);
 
-        if (junctionError) throw junctionError;
-      }
+      if (junctionError) throw new Error(`Simpan tugas_petugas gagal: ${junctionError.message}`);
 
       return { id: tugasId };
     },
@@ -132,10 +131,12 @@ export function useSubmitTugasLog() {
   return useMutation({
     mutationFn: async ({
       tugasId,
+      petugasId,
       data,
       coordinates,
     }: {
       tugasId: string;
+      petugasId?: string;
       data: TugasLogFormData;
       coordinates: { latitude: number; longitude: number };
     }) => {
@@ -143,12 +144,15 @@ export function useSubmitTugasLog() {
       const uploadedUrls: string[] = [];
 
       for (const file of data.url_foto) {
-        const fileName = `${tugasId}/${Date.now()}-${file.name}`;
+        const cleanName = (file.name || 'foto.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `${tugasId}/${Date.now()}-${cleanName}`;
         const { error: uploadError } = await supabase.storage
           .from(STORAGE_BUCKETS.FOTO_TUGAS)
           .upload(fileName, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          throw new Error(`Upload foto gagal (${file.name}): ${uploadError.message}`);
+        }
 
         const { data: urlData } = supabase.storage
           .from(STORAGE_BUCKETS.FOTO_TUGAS)
@@ -157,30 +161,39 @@ export function useSubmitTugasLog() {
         uploadedUrls.push(urlData.publicUrl);
       }
 
-      // 2. Insert log
+      // 2. Insert log with id_petugas
+      const logPayload: Record<string, unknown> = {
+        id_tugas: tugasId,
+        tahapan: data.tahapan,
+        deskripsi: data.deskripsi,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        url_foto: uploadedUrls,
+      };
+
+      if (petugasId) {
+        logPayload.id_petugas = petugasId;
+      }
+
       const { data: log, error: logError } = await supabase
         .from('tugas_log')
-        .insert({
-          id_tugas: tugasId,
-          tahapan: data.tahapan,
-          deskripsi: data.deskripsi,
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          url_foto: uploadedUrls,
-        })
+        .insert(logPayload)
         .select()
         .single();
 
-      if (logError) throw logError;
+      if (logError) {
+        throw new Error(`Simpan tugas_log gagal: ${logError.message}`);
+      }
 
-      // 3. Update header status
-      const newStatus: string = data.tahapan === 'Finished' ? 'Selesai' : 'Proses';
-      const { error: updateError } = await supabase
-        .from('tugas_header')
-        .update({ status_tugas: newStatus })
-        .eq('id', tugasId);
-
-      if (updateError) throw updateError;
+      // 3. Update individual status on tugas_petugas
+      const newStatus = data.tahapan === 'Finished' ? 'Selesai' : 'Proses';
+      if (petugasId) {
+        await supabase
+          .from('tugas_petugas')
+          .update({ status_tugas: newStatus })
+          .eq('id_tugas', tugasId)
+          .eq('id_petugas', petugasId);
+      }
 
       return log;
     },

@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ROUTES, ROLE_CODES } from '@/lib/constants';
 import { AppLayout } from '@/components/layout/AppLayout';

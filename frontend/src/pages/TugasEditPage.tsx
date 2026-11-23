@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, X, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -149,7 +148,7 @@ export default function TugasEditPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <Button variant="ghost" onClick={() => navigate(ROUTES.TUGAS)}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Kembali

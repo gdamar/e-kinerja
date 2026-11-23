@@ -75,7 +75,7 @@ export default function PenilaianListPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Penilaian Kinerja"
         description="Riwayat penilaian dan evaluasi kinerja petugas"

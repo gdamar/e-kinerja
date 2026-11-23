@@ -164,7 +164,7 @@ export function LocationPicker({
                 </p>
               )}
               {address && (
-                <p className="text-xs text-muted-foreground mt-1 truncate" title={address}>
+                <p className="sm:max-w-[400px]:w-[400px] text-xs text-muted-foreground mt-1 truncate" title={address}>
                   {address}
                 </p>
               )}

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { TahapanProgress } from '@/components/features/tugas/TahapanProgress';
-import { PetaTugas, PetaTugasPlaceholder } from '@/components/features/tugas/PetaTugas';
 import { useTugasDetail } from '@/hooks/useTugasDetail';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { TugasLogForm } from '@/components/features/tugas/TugasLogForm';
@@ -53,8 +52,19 @@ export default function TugasDetailPage() {
     );
   }
 
+  // Find assignment and logs for the currently logged-in user if petugas
+  const myAssignment = isPetugas ? tugas.allPetugas?.find(p => p.id === profile?.id) : null;
+  const myStatus = myAssignment?.status_tugas || tugas.status_tugas;
+
+  // Filter logs relevant for progress:
+  // For petugas: their own logs
+  // For staff: all logs
+  const relevantLogs = isPetugas && profile
+    ? (tugas.logs?.filter((l) => !l.id_petugas || l.id_petugas === profile.id) || [])
+    : (tugas.logs || []);
+
   // Determine next stage and if can report
-  const completedStages = tugas.logs?.map((l) => l.tahapan) || [];
+  const completedStages = relevantLogs.map((l) => l.tahapan);
   const nextStage: TahapanTugas | null =
     !completedStages.includes('Before')
       ? 'Before'
@@ -64,30 +74,15 @@ export default function TugasDetailPage() {
       ? 'Finished'
       : null;
 
-  const canReport = nextStage && tugas.status_tugas !== 'Selesai';
-
-  // Get location from first log if available
-  const firstLog = tugas.logs?.[0];
+  const canReport = nextStage && myStatus !== 'Selesai';
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       {/* Back button */}
       <Button variant="ghost" onClick={() => navigate(ROUTES.TUGAS)}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Kembali
       </Button>
-
-      {/* Map Preview */}
-      {firstLog ? (
-        <PetaTugas
-          latitude={firstLog.latitude}
-          longitude={firstLog.longitude}
-          title={tugas.judul_tugas}
-          height="200px"
-        />
-      ) : (
-        <PetaTugasPlaceholder height="200px" />
-      )}
 
       {/* Task Info */}
       <Card>
@@ -102,18 +97,40 @@ export default function TugasDetailPage() {
 
           <Separator />
 
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Tanggal: </span>
-              <span className="font-medium">{formatDate(tugas.tanggal_tugas)}</span>
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <span className="text-muted-foreground">Tanggal: </span>
+                <span className="font-medium">{formatDate(tugas.tanggal_tugas)}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Status Keseluruhan: </span>
+                <Badge variant={statusToVariant(tugas.status_tugas)}>{tugas.status_tugas}</Badge>
+              </div>
             </div>
+
+            {/* Tim Petugas & Individual Status */}
             <div>
-              <span className="text-muted-foreground">Petugas: </span>
-              <span className="font-medium">
-                {tugas.allPetugas?.map(p => p.nama_phl).join(', ') || '-'}
-              </span>
+              <p className="text-muted-foreground mb-1">Anggota Tim Petugas:</p>
+              <div className="flex flex-wrap gap-2">
+                {tugas.allPetugas && tugas.allPetugas.length > 0 ? (
+                  tugas.allPetugas.map((petugas) => (
+                    <div
+                      key={petugas.id}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs ${
+                        profile?.id === petugas.id ? 'bg-primary/5 border-primary/30 font-semibold' : 'bg-muted/30'
+                      }`}
+                    >
+                      <span>
+                        {petugas.nama_phl} {profile?.id === petugas.id ? '(Anda)' : ''}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </div>
             </div>
-            <Badge variant={statusToVariant(tugas.status_tugas)}>{tugas.status_tugas}</Badge>
           </div>
         </CardContent>
       </Card>
@@ -121,7 +138,14 @@ export default function TugasDetailPage() {
       {/* Progress */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Progres Tahapan</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              {isPetugas ? 'Progres Tahapan Anda' : 'Progres Tahapan'}
+            </CardTitle>
+            {isPetugas && (
+              <Badge variant={statusToVariant(myStatus)}>{myStatus}</Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <TahapanProgress completedTahapan={completedStages} />
@@ -141,7 +165,12 @@ export default function TugasDetailPage() {
             <DialogHeader>
               <DialogTitle>Laporan Tahapan {nextStage}</DialogTitle>
             </DialogHeader>
-            <TugasLogForm tugasId={tugas.id} tahap={nextStage!} onSuccess={() => setIsFormOpen(false)} />
+            <TugasLogForm
+              tugasId={tugas.id}
+              petugasId={profile?.id}
+              tahap={nextStage!}
+              onSuccess={() => setIsFormOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       )}
@@ -163,7 +192,14 @@ export default function TugasDetailPage() {
               <Card key={log.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{log.tahapan}</CardTitle>
+                    <div>
+                      <CardTitle className="text-base">{log.tahapan}</CardTitle>
+                      {log.petugas && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Oleh: {log.petugas.nama_phl} {profile?.id === log.petugas.id ? '(Anda)' : ''}
+                        </p>
+                      )}
+                    </div>
                     <Badge variant="success">{log.tahapan}</Badge>
                   </div>
                 </CardHeader>

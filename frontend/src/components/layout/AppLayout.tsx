@@ -55,18 +55,20 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-dvh w-full overflow-hidden bg-background">
       {/* Desktop: Sidebar + Main */}
-      <div className="hidden md:flex">
+      <div className="hidden md:flex h-full w-full">
         <Sidebar />
-        <main className="flex-1 min-h-screen flex flex-col">
+        <main className="flex-1 h-full overflow-y-auto p-4 md:p-6 space-y-6">
           <Outlet />
         </main>
       </div>
 
       {/* Mobile: Main + BottomNav */}
-      <div className="md:hidden flex flex-col min-h-screen pb-16">
-        <main className="flex-1"><Outlet /></main>
+      <div className="md:hidden flex flex-col h-full w-full">
+        <main className="flex-1 h-[calc(100dvh-4rem)] overflow-y-auto p-4 space-y-6">
+          <Outlet />
+        </main>
         <BottomNav />
       </div>
     </div>

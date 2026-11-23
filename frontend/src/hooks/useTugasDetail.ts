@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { TugasHeader, TugasLog, MasterPetugas } from '@/types';
+import type { TugasHeader, TugasLog, PetugasWithStatus, StatusTugas } from '@/types';
 
 interface TugasWithLogs extends TugasHeader {
   logs: TugasLog[];
-  allPetugas: MasterPetugas[];
+  allPetugas: PetugasWithStatus[];
 }
 
 export function useTugasDetail(tugasId: string) {
@@ -23,34 +23,47 @@ export function useTugasDetail(tugasId: string) {
 
       if (headerError) throw headerError;
 
-      // Fetch all petugas from junction table
+      // Fetch all petugas from junction table including their individual status_tugas
       const { data: junctionData } = await supabase
         .from('tugas_petugas')
         .select(`
           id_petugas,
+          status_tugas,
           petugas:master_petugas(*)
         `)
         .eq('id_tugas', tugasId);
 
-      // Combine primary petugas + junction petugas
-      const allPetugas: MasterPetugas[] = [];
-      if (header.petugas) {
-        allPetugas.push(header.petugas as unknown as MasterPetugas);
-      }
-      if (junctionData) {
+      // Combine primary petugas + junction petugas with status
+      const allPetugas: PetugasWithStatus[] = [];
+      const addedIds = new Set<string>();
+
+      if (junctionData && junctionData.length > 0) {
         for (const j of junctionData) {
-          if (j.petugas && !allPetugas.some(p => p.id === (j.petugas as unknown as MasterPetugas).id)) {
-            allPetugas.push(j.petugas as unknown as MasterPetugas);
+          if (j.petugas) {
+            const p = j.petugas as unknown as PetugasWithStatus;
+            p.status_tugas = (j.status_tugas as StatusTugas) || 'Menunggu';
+            allPetugas.push(p);
+            addedIds.add(p.id);
           }
         }
       }
 
-      // Fetch logs
+      // If header.petugas is not yet in junction table, add as fallback
+      if (header.petugas && !addedIds.has((header.petugas as unknown as PetugasWithStatus).id)) {
+        const p = header.petugas as unknown as PetugasWithStatus;
+        p.status_tugas = header.status_tugas;
+        allPetugas.push(p);
+      }
+
+      // Fetch logs with petugas details (newest first)
       const { data: logs, error: logsError } = await supabase
         .from('tugas_log')
-        .select('*')
+        .select(`
+          *,
+          petugas:master_petugas(id, nama_phl, nik)
+        `)
         .eq('id_tugas', tugasId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (logsError) throw logsError;
 
