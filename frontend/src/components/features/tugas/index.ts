@@ -4,3 +4,4 @@ export { ImageUploader } from './ImageUploader';
 export { PetaTugas, PetaTugasPlaceholder } from './PetaTugas';
 export { TugasLogForm } from './TugasLogForm';
 export { TugasCard } from './TugasCard';
+export { TaskLocationPicker } from './TaskLocationPicker';

@@ -32,6 +32,14 @@ export default {
         background: '#FAFAF9',
         surface: '#FFFFFF',
         foreground: '#1C1917',
+        popover: {
+          DEFAULT: '#FFFFFF',
+          foreground: '#1C1917',
+        },
+        destructive: {
+          DEFAULT: '#EF4444',
+          foreground: '#FFFFFF',
+        },
         muted: {
           DEFAULT: '#78716C',
           foreground: '#78716C',

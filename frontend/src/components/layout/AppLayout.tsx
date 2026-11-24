@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { Toaster } from '@/hooks/useToast';
 
 export function AppLayout() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -71,6 +72,9 @@ export function AppLayout() {
         </main>
         <BottomNav />
       </div>
+
+      {/* Global Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

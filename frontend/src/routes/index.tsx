@@ -18,6 +18,8 @@ const CutiAjuanPage = lazy(() => import('@/pages/CutiAjuanPage'));
 const CutiApprovalPage = lazy(() => import('@/pages/CutiApprovalPage'));
 const PenilaianListPage = lazy(() => import('@/pages/PenilaianListPage'));
 const PenilaianFormPage = lazy(() => import('@/pages/PenilaianFormPage'));
+const PenilaianBandingPage = lazy(() => import('@/pages/PenilaianBandingPage'));
+const PenilaianAjuBandingPage = lazy(() => import('@/pages/PenilaianAjuBandingPage'));
 const PetugasListPage = lazy(() => import('@/pages/PetugasListPage'));
 const PetugasFormPage = lazy(() => import('@/pages/PetugasFormPage'));
 const PetugasDetailPage = lazy(() => import('@/pages/PetugasDetailPage'));
@@ -162,6 +164,26 @@ export function createRouter() {
             <Suspense fallback={<LoadingFallback />}>
               <PenilaianFormPage />
             </Suspense>
+          ),
+        },
+        {
+          path: ROUTES.PENILAIAN_BANDING,
+          element: (
+            <RoleGate roles={[ROLE_CODES.OPERATOR]}>
+              <Suspense fallback={<LoadingFallback />}>
+                <PenilaianBandingPage />
+              </Suspense>
+            </RoleGate>
+          ),
+        },
+        {
+          path: ROUTES.PENILAIAN_AJU_BANDING,
+          element: (
+            <RoleGate roles={[ROLE_CODES.PETUGAS]}>
+              <Suspense fallback={<LoadingFallback />}>
+                <PenilaianAjuBandingPage />
+              </Suspense>
+            </RoleGate>
           ),
         },
         {

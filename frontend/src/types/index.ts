@@ -32,6 +32,8 @@ export interface TugasHeader {
   id_petugas: string;
   judul_tugas: string;
   alamat: string;
+  latitude?: number | null;
+  longitude?: number | null;
   tanggal_tugas: string;
   status_tugas: StatusTugas;
   created_at: string;
@@ -88,6 +90,29 @@ export interface Penilaian {
   operator?: MasterPetugas;
 }
 
+export type StatusBanding = 'Menunggu' | 'Disetujui' | 'Ditangguhkan' | 'Ditolak';
+
+export interface PenilaianBanding {
+  id: string;
+  id_penilaian: string;
+  catatan_petugas: string;
+  catatan_operator?: string | null;
+  lampiran_url?: string | null;
+  status: StatusBanding;
+  created_at: string;
+  reviewed_at?: string | null;
+  penilaian?: Penilaian;
+}
+
+export interface PenilaianDetail extends Penilaian {
+  banding?: PenilaianBanding[];
+}
+
+export interface PenilaianBandingFormData {
+  catatan_petugas: string;
+  lampiran?: File;
+}
+
 // API Response types
 export interface ApiResponse<T> {
   data: T | null;
@@ -106,6 +131,8 @@ export interface TugasFormData {
   id_petugas: string;
   judul_tugas: string;
   alamat: string;
+  latitude?: number | null;
+  longitude?: number | null;
   tanggal_tugas: string;
 }
 

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { TugasFormData, TugasLogFormData } from '@/types';
 import { STORAGE_BUCKETS } from '@/lib/supabase';
+import { isTaskForToday } from '@/lib/utils';
 
 interface CreateTugasData extends Omit<TugasFormData, 'id_petugas'> {
   id_petugas: string[];
@@ -23,6 +24,8 @@ export function useCreateTugas() {
           id_petugas: data.id_petugas[0], // Primary petugas
           judul_tugas: data.judul_tugas,
           alamat: data.alamat,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
           tanggal_tugas: data.tanggal_tugas,
           status_tugas: 'Menunggu',
         })
@@ -65,6 +68,8 @@ export function useUpdateTugas() {
           id_petugas: data.id_petugas[0], // Primary petugas
           judul_tugas: data.judul_tugas,
           alamat: data.alamat,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
           tanggal_tugas: data.tanggal_tugas,
         })
         .eq('id', tugasId);
@@ -140,6 +145,21 @@ export function useSubmitTugasLog() {
       data: TugasLogFormData;
       coordinates: { latitude: number; longitude: number };
     }) => {
+      // 0. Verify that the task is scheduled for today
+      const { data: headerData, error: headerError } = await supabase
+        .from('tugas_header')
+        .select('tanggal_tugas')
+        .eq('id', tugasId)
+        .single();
+
+      if (headerError) {
+        throw new Error(`Gagal memverifikasi tugas: ${headerError.message}`);
+      }
+
+      if (!isTaskForToday(headerData?.tanggal_tugas)) {
+        throw new Error('Pembuatan laporan hanya diperbolehkan pada tanggal pelaksanaan tugas hari ini.');
+      }
+
       // 1. Upload photos to Supabase Storage
       const uploadedUrls: string[] = [];
 

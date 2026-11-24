@@ -46,17 +46,6 @@ export default function TugasListPage() {
     status: statusFilter || undefined,
   });
 
-  console.log('[TugasListPage] request state', {
-    profileId: profile?.id,
-    profileEmail: profile?.email,
-    roleId: profile?.role_id,
-    roleName: profile?.role?.nama_role,
-    isLoading,
-    tugasCount: tugas?.length ?? 0,
-    tugasIds: tugas?.map((item) => item.id) ?? [],
-    tugasPetugasIds: tugas?.map((item) => item.id_petugas) ?? [],
-  });
-
   // Group by date
   const groupedTugas = tugas?.reduce((acc, t) => {
     const date = t.tanggal_tugas;

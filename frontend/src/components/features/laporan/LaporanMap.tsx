@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import type { LatLngExpression, Icon } from 'leaflet';
+import type { LatLngExpression } from 'leaflet';
 import { useMemo } from 'react';
 import { MapPin } from 'lucide-react';
 import L from 'leaflet';
@@ -36,19 +36,6 @@ export function LaporanMap({ coordinates, height = '300px', center }: LaporanMap
     const avgLng = coordinates.reduce((sum, c) => sum + c.longitude, 0) / coordinates.length;
     return [avgLat, avgLng];
   }, [coordinates, center]);
-
-  const getMarkerColor = (status: string): string => {
-    switch (status) {
-      case 'Selesai':
-        return '#22C55E'; // green
-      case 'Proses':
-        return '#F59E0B'; // amber
-      case 'Menunggu':
-        return '#78716C'; // gray
-      default:
-        return '#0F766E'; // primary
-    }
-  };
 
   return (
     <div className="rounded-lg overflow-hidden border" style={{ height }}>

@@ -22,10 +22,13 @@ import { usePetugasList } from '@/hooks/usePetugasList';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { TaskLocationPicker } from '@/components/features/tugas/TaskLocationPicker';
 
 const schema = z.object({
   judul_tugas: z.string().min(1, 'Judul wajib diisi'),
   alamat: z.string().min(1, 'Alamat wajib diisi'),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   tanggal_tugas: z.string().min(1, 'Tanggal wajib diisi'),
 });
 
@@ -51,9 +54,15 @@ export default function TugasEditPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<FormData>();
+
+  const watchAlamat = watch('alamat');
+  const watchLatitude = watch('latitude');
+  const watchLongitude = watch('longitude');
 
   // Reset form when tugas data is loaded
   useEffect(() => {
@@ -61,6 +70,8 @@ export default function TugasEditPage() {
       reset({
         judul_tugas: tugasData.judul_tugas,
         alamat: tugasData.alamat,
+        latitude: tugasData.latitude ?? null,
+        longitude: tugasData.longitude ?? null,
         tanggal_tugas: tugasData.tanggal_tugas,
       });
 
@@ -269,14 +280,18 @@ export default function TugasEditPage() {
               />
             </div>
 
-            {/* Alamat */}
+            {/* Alamat & Geotagging Location Picker */}
             <div className="space-y-2">
-              <Label htmlFor="alamat">Alamat / Lokasi</Label>
-              <Input
-                id="alamat"
-                placeholder="Contoh: jalan Melati No. 5, RT 03"
+              <TaskLocationPicker
+                value={watchAlamat || ''}
+                latitude={watchLatitude}
+                longitude={watchLongitude}
                 error={errors.alamat?.message}
-                {...register('alamat')}
+                onChange={({ alamat, latitude, longitude }) => {
+                  setValue('alamat', alamat, { shouldValidate: true });
+                  setValue('latitude', latitude);
+                  setValue('longitude', longitude);
+                }}
               />
             </div>
 

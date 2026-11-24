@@ -42,6 +42,22 @@ export function formatTime(date: string | Date): string {
   }).format(d);
 }
 
+export function getLocalDateString(date: string | Date = new Date()): string {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function isTaskForToday(taskDate: string | Date | null | undefined): boolean {
+  if (!taskDate) return false;
+  // If taskDate is YYYY-MM-DD or ISO string, extract date part
+  const taskDateStr = typeof taskDate === 'string' ? taskDate.split('T')[0].trim() : getLocalDateString(taskDate);
+  const todayStr = getLocalDateString(new Date());
+  return taskDateStr === todayStr;
+}
+
 export function calculateDays(startDate: string, endDate: string): number {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -79,7 +95,8 @@ export function getMonthName(month: number): string {
   return months[month - 1] || '';
 }
 
-export function debounce<T extends (...args: unknown[]) => unknown>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -91,4 +108,28 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
     }
     timeout = setTimeout(() => func(...args), wait);
   };
+}
+
+/**
+ * Calculate distance in meters between two coordinates using the Haversine formula
+ */
+export function calculateDistanceMeter(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371e3; // Earth's radius in meters
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) *
+    Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.round(R * c);
 }

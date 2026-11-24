@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Filter, X, Edit } from 'lucide-react';
+import { Plus, FileText, Filter, X, Edit, Eye, Scale } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -9,8 +9,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { usePenilaianList } from '@/hooks/usePenilaianList';
 import { usePetugasList } from '@/hooks/usePetugasList';
+import { usePenilaianBandingList } from '@/hooks/usePenilaianBanding';
 import { RoleGate } from '@/components/shared/RoleGate';
 import { ROUTES, ROLE_CODES, BULAN_OPTIONS } from '@/lib/constants';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  ModalLampiranPreview,
+  PenilaianDetailModal,
+} from '@/components/features/penilaian';
+import { useAuth } from '@/context/AuthContext';
+import type { Penilaian } from '@/types';
 import {
   Select,
   SelectContent,
@@ -32,7 +45,13 @@ import {
 
 export default function PenilaianListPage() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isPetugas = profile?.role?.nama_role === ROLE_CODES.PETUGAS;
+
   const [showFilters, setShowFilters] = useState(false);
+  const [detailModalPenilaian, setDetailModalPenilaian] = useState<Penilaian | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const [filters, setFilters] = useState({
     bulan: null as number | null,
     tahun: null as number | null,
@@ -43,6 +62,10 @@ export default function PenilaianListPage() {
 
   const { data: penilaianList, isLoading } = usePenilaianList(filters);
   const { data: petugasList } = usePetugasList();
+
+  // Banding pending count for operator button
+  const { data: pendingBandingList } = usePenilaianBandingList('Menunggu');
+  const pendingCount = pendingBandingList?.length ?? 0;
 
   const hasActiveFilters =
     filters.bulan !== null ||
@@ -80,7 +103,22 @@ export default function PenilaianListPage() {
         title="Penilaian Kinerja"
         description="Riwayat penilaian dan evaluasi kinerja petugas"
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <RoleGate roles={[ROLE_CODES.OPERATOR]}>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => navigate(ROUTES.PENILAIAN_BANDING)}
+              >
+                <Scale className="h-4 w-4 text-primary" />
+                Pengajuan Banding
+                {pendingCount > 0 && (
+                  <Badge variant="warning" className="h-5 px-1.5 text-xs">
+                    {pendingCount}
+                  </Badge>
+                )}
+              </Button>
+            </RoleGate>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
@@ -340,83 +378,150 @@ export default function PenilaianListPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Petugas</TableHead>
-                  <TableHead>NIK</TableHead>
-                  <TableHead>Periode</TableHead>
-                  <TableHead className="text-center">Disiplin</TableHead>
-                  <TableHead className="text-center">Tanggung Jawab</TableHead>
-                  <TableHead className="text-center">Kepatuhan</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead>Catatan</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {penilaianList.map((penilaian) => {
-                  const getScoreColor = (score: number) => {
-                    if (score >= 80) return 'text-status-success';
-                    if (score >= 60) return 'text-status-warning';
-                    return 'text-status-error';
-                  };
+            <TooltipProvider delayDuration={200}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center">Petugas</TableHead>
+                    <TableHead className="text-center">NIK</TableHead>
+                    <TableHead className="text-center">Periode</TableHead>
+                    <TableHead className="text-center">Disiplin</TableHead>
+                    <TableHead className="text-center">Tanggung Jawab</TableHead>
+                    <TableHead className="text-center">Kepatuhan</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Catatan</TableHead>
+                    <TableHead className="text-center">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {penilaianList.map((penilaian) => {
+                    const getScoreColor = (score: number) => {
+                      if (score >= 80) return 'text-status-success';
+                      if (score >= 60) return 'text-status-warning';
+                      return 'text-status-error';
+                    };
 
-                  return (
-                    <TableRow key={penilaian.id}>
-                      <TableCell className="font-medium">
-                        {penilaian.petugas?.nama_phl || '-'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {penilaian.petugas?.nik || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {getMonthName(penilaian.periode_bulan)} {penilaian.periode_tahun}
-                      </TableCell>
-                      <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_displin_kehadiran)}`}>
-                        {penilaian.skor_displin_kehadiran.toFixed(0)}
-                      </TableCell>
-                      <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_tanggung_jawab)}`}>
-                        {penilaian.skor_tanggung_jawab.toFixed(0)}
-                      </TableCell>
-                      <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_kepatuhan)}`}>
-                        {penilaian.skor_kepatuhan.toFixed(0)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            penilaian.total_nilai >= 80
-                              ? 'success'
-                              : penilaian.total_nilai >= 60
-                              ? 'warning'
-                              : 'error'
-                          }
-                        >
-                          {penilaian.total_nilai.toFixed(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                        {penilaian.catatan || '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <RoleGate roles={[ROLE_CODES.OPERATOR]}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`${ROUTES.PENILAIAN}/${penilaian.id}`)}
+                    return (
+                      <TableRow key={penilaian.id}>
+                        <TableCell className="font-medium text-center">
+                          {penilaian.petugas?.nama_phl || '-'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-center">
+                          {penilaian.petugas?.nik || '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getMonthName(penilaian.periode_bulan)} {penilaian.periode_tahun}
+                        </TableCell>
+                        <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_displin_kehadiran)}`}>
+                          {penilaian.skor_displin_kehadiran.toFixed(0)}
+                        </TableCell>
+                        <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_tanggung_jawab)}`}>
+                          {penilaian.skor_tanggung_jawab.toFixed(0)}
+                        </TableCell>
+                        <TableCell className={`text-center font-medium ${getScoreColor(penilaian.skor_kepatuhan)}`}>
+                          {penilaian.skor_kepatuhan.toFixed(0)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge
+                            variant={
+                              penilaian.total_nilai >= 80
+                                ? 'success'
+                                : penilaian.total_nilai >= 60
+                                ? 'warning'
+                                : 'error'
+                            }
                           >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </RoleGate>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                            {penilaian.total_nilai.toFixed(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-muted-foreground text-center">
+                          {penilaian.catatan || '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Tombol Detail & Riwayat Banding */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  aria-label="Detail & Riwayat Penilaian"
+                                  onClick={() => setDetailModalPenilaian(penilaian)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Detail & Riwayat Penilaian</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            {/* Tombol Ajukan Banding Khusus Petugas */}
+                            {isPetugas && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-primary hover:text-primary"
+                                    aria-label="Ajukan Banding"
+                                    onClick={() => navigate(`/penilaian/${penilaian.id}/banding`)}
+                                  >
+                                    <Scale className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Ajukan Banding</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+
+                            {/* Tombol Edit Khusus Operator */}
+                            <RoleGate roles={[ROLE_CODES.OPERATOR]}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    aria-label="Edit Penilaian"
+                                    onClick={() => navigate(`${ROUTES.PENILAIAN}/${penilaian.id}`)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit Penilaian</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </RoleGate>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </CardContent>
         </Card>
       )}
+
+      {/* Modal Detail & Riwayat Banding */}
+      <PenilaianDetailModal
+        penilaian={detailModalPenilaian}
+        isOpen={!!detailModalPenilaian}
+        onClose={() => setDetailModalPenilaian(null)}
+        onOpenPreview={(url) => setPreviewUrl(url)}
+      />
+
+      {/* Modal Lampiran Preview */}
+      <ModalLampiranPreview
+        isOpen={!!previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        url={previewUrl}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Camera, FileText } from 'lucide-react';
+import { ArrowLeft, MapPin, Camera, FileText, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { useTugasDetail } from '@/hooks/useTugasDetail';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { TugasLogForm } from '@/components/features/tugas/TugasLogForm';
 import { ROUTES, ROLE_CODES } from '@/lib/constants';
-import { formatDate, formatDateTime, statusToVariant } from '@/lib/utils';
+import { formatDate, formatDateTime, statusToVariant, isTaskForToday } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import type { TahapanTugas } from '@/types';
 
@@ -74,7 +74,8 @@ export default function TugasDetailPage() {
       ? 'Finished'
       : null;
 
-  const canReport = nextStage && myStatus !== 'Selesai';
+  const isToday = isTaskForToday(tugas.tanggal_tugas);
+  const canReport = nextStage && myStatus !== 'Selesai' && isToday;
 
   return (
     <div className="space-y-6">
@@ -152,27 +153,50 @@ export default function TugasDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Report Button - Only for Petugas */}
-      {canReport && isPetugas && (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full" size="lg">
-              <Camera className="h-4 w-4 mr-2" />
-              Laporkan {nextStage}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Laporan Tahapan {nextStage}</DialogTitle>
-            </DialogHeader>
-            <TugasLogForm
-              tugasId={tugas.id}
-              petugasId={profile?.id}
-              tahap={nextStage!}
-              onSuccess={() => setIsFormOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Report Button - Only for Petugas on Today's Task */}
+      {isPetugas && myStatus !== 'Selesai' && (
+        <>
+          {canReport ? (
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full" size="lg">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Laporkan {nextStage}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Laporan Tahapan {nextStage}</DialogTitle>
+                </DialogHeader>
+                <TugasLogForm
+                  tugasId={tugas.id}
+                  petugasId={profile?.id}
+                  tahap={nextStage!}
+                  tanggalTugas={tugas.tanggal_tugas}
+                  targetLocation={
+                    tugas.latitude && tugas.longitude
+                      ? { latitude: tugas.latitude, longitude: tugas.longitude }
+                      : null
+                  }
+                  onSuccess={() => setIsFormOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          ) : !isToday ? (
+            <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20">
+              <CardContent className="p-4 flex items-center gap-3 text-amber-800 dark:text-amber-200">
+                <CalendarClock className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div className="text-xs sm:text-sm">
+                  <p className="font-semibold">Laporan Belum / Tidak Tersedia</p>
+                  <p className="mt-0.5 opacity-90">
+                    Pembuatan laporan hanya dapat dilakukan pada tanggal pelaksanaan tugas (
+                    {formatDate(tugas.tanggal_tugas)}).
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
       )}
 
       {/* Log Entries */}

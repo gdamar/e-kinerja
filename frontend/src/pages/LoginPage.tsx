@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/lib/constants';
+import { Toaster } from '@/hooks/useToast';
 
 const loginSchema = z.object({
   email: z.string().email('Email tidak valid'),
@@ -112,6 +113,7 @@ export default function LoginPage() {
           <p>© 2026 PPSU Kelurahan Cipinang</p>
         </div>
       </Card>
+      <Toaster />
     </div>
   );
 }

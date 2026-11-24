@@ -15,6 +15,8 @@ export const ROUTES = {
   PENILAIAN: '/penilaian',
   PENILAIAN_NEW: '/penilaian/baru',
   PENILAIAN_EDIT: '/penilaian/:id',
+  PENILAIAN_BANDING: '/penilaian/banding',
+  PENILAIAN_AJU_BANDING: '/penilaian/:id/banding',
   PROFILE: '/profile',
 
   // Petugas routes
@@ -58,7 +60,16 @@ export const STATUS_APPROVAL = {
   TIDAK_DISETUJUI: 'Tidak Disetujui',
 } as const;
 
+export const STATUS_BANDING = {
+  MENUNGGU: 'Menunggu',
+  DISETUJUI: 'Disetujui',
+  DITANGGUHKAN: 'Ditangguhkan',
+  DITOLAK: 'Ditolak',
+} as const;
+
 export const KUOTA_CUTI_TAHUNAN = 12;
+
+export const MAX_RADIUS_TUGAS_METER = 100;
 
 export const MAX_FOTO_PER_LOG = 3;
 export const MIN_FOTO_PER_LOG = 1;

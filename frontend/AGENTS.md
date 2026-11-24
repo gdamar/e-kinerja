@@ -88,10 +88,12 @@ Aplikasi memiliki pembagian hak akses menggunakan `RoleGate` dan konstanta `ROLE
   - Review & approval pengajuan cuti.
   - Manajemen data petugas dan akun.
   - Mengelola penilaian kinerja petugas (`/penilaian`).
+  - Meninjau, menyetujui, dan menolak pengajuan banding nilai petugas (`/penilaian/banding`).
 - **`PETUGAS`**:
   - Melihat daftar tugas yang ditugaskan kepada dirinya.
   - Melaporkan log/progres tahapan tugas lapangan (*Before*, *Ongoing*, *Finished*) via `TugasLogForm`.
   - Mengajukan permohonan cuti (`/cuti/ajuan`).
+  - Mengajukan banding atas evaluasi penilaian kinerja yang diperoleh (`/penilaian/:id/banding`).
 
 ---
 
@@ -122,6 +124,17 @@ Aplikasi memiliki pembagian hak akses menggunakan `RoleGate` dan konstanta `ROLE
 
 ### D. Form & Validasi
 - Gunakan `react-hook-form` bersama `@hookform/resolvers/zod` dan skema validasi `zod` untuk menangani form.
+
+### E. Penanganan Pesan & Notifikasi Pengguna (Feedback & Errors)
+- **Dilarang menggunakan `alert()` browser native**: Seluruh feedback keberhasilan, peringatan, maupun pesan error yang ditujukan kepada pengguna wajib menggunakan komponen notifikasi **Toast** (`useToast` / `toast({ title, description, variant })` dari `@/hooks/useToast`).
+- Gunakan `variant: 'destructive'` untuk pesan error/kegagalan dan `variant: 'default'` untuk konfirmasi atau keberhasilan.
+- Berikan judul (`title`) yang ringkas dan deskripsi (`description`) yang jelas serta solutif bagi pengguna.
+
+### F. Tombol Aksi pada Tabel & Penggunaan Tooltip
+- **Icon-Only Buttons pada Tabel**: Untuk tombol aksi di dalam tabel (seperti tombol ajukan banding, setujui, tolak, detail/riwayat, atau edit), gunakan tombol yang **hanya berisi icon** tanpa teks label (`h-8 w-8 p-0` atau `size="icon"`).
+- **Wajib Menggunakan Tooltip**: Setiap tombol icon-only pada tabel wajib dibungkus dengan komponen `Tooltip` (`Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider`) dari `@/components/ui/tooltip` untuk mendeskripsikan aksinya ketika di-hover/fokus (misalnya "Ajukan Banding", "Setujui Banding", "Tolak Banding", "Edit Penilaian").
+- **Aksesibilitas (A11y)**: Selalu sediakan `aria-label` yang sesuai pada tombol icon-only agar pembaca layar (screen reader) tetap dapat mengidentifikasi aksi tombol tersebut.
+- **Perataan Kolom Tabel Penilaian**: Pastikan kolom aksi dan data nilai di tabel penilaian menggunakan perataan tengah (`text-center` / `justify-center`) agar rapi dan simetris.
 
 ---
 

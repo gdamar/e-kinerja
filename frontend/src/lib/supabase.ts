@@ -19,6 +19,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 export const STORAGE_BUCKETS = {
   FOTO_TUGAS: 'tugas-foto',
   LAMPIRAN_CUTI: 'cuti-lampiran',
+  LAMPIRAN_BANDING: 'penilaian-lampiran',
 } as const;
 
 // Helper to get public URL for storage

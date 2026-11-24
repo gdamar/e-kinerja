@@ -21,10 +21,13 @@ import { usePetugasList } from '@/hooks/usePetugasList';
 import { ROUTES } from '@/lib/constants';
 import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
+import { TaskLocationPicker } from '@/components/features/tugas/TaskLocationPicker';
 
 const schema = z.object({
   judul_tugas: z.string().min(1, 'Judul wajib diisi'),
   alamat: z.string().min(1, 'Alamat wajib diisi'),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   tanggal_tugas: z.string().min(1, 'Tanggal wajib diisi'),
 });
 
@@ -48,13 +51,22 @@ export default function TugasNewPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      alamat: '',
+      latitude: null,
+      longitude: null,
       tanggal_tugas: new Date().toISOString().split('T')[0],
     },
   });
+
+  const watchAlamat = watch('alamat');
+  const watchLatitude = watch('latitude');
+  const watchLongitude = watch('longitude');
 
   const togglePetugas = (petugas: PetugasOption) => {
     setSelectedPetugas((prev) => {
@@ -215,6 +227,19 @@ export default function TugasNewPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <TaskLocationPicker
+                value={watchAlamat || ''}
+                latitude={watchLatitude}
+                longitude={watchLongitude}
+                error={errors.alamat?.message}
+                onChange={({ alamat, latitude, longitude }) => {
+                  setValue('alamat', alamat, { shouldValidate: true });
+                  setValue('latitude', latitude);
+                  setValue('longitude', longitude);
+                }}
+              />
+            </div>
             {/* Judul */}
             <div className="space-y-2">
               <Label htmlFor="judul_tugas">Judul Tugas</Label>
@@ -226,16 +251,7 @@ export default function TugasNewPage() {
               />
             </div>
 
-            {/* Alamat */}
-            <div className="space-y-2">
-              <Label htmlFor="alamat">Alamat / Lokasi</Label>
-              <Input
-                id="alamat"
-                placeholder="Contoh: jalan Melati No. 5, RT 03"
-                error={errors.alamat?.message}
-                {...register('alamat')}
-              />
-            </div>
+            {/* Alamat & Geotagging Location Picker */}
 
             {/* Tanggal */}
             <div className="space-y-2">
