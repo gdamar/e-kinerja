@@ -198,21 +198,6 @@ export function TugasLogForm({
 
       {/* Location */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>Lokasi Petugas (GPS)</Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleRefreshGps}
-            disabled={isRefreshingGps || isSubmitting}
-            className="h-7 text-xs flex items-center gap-1.5"
-          >
-            <RefreshCw className={`h-3 w-3 ${isRefreshingGps ? 'animate-spin' : ''}`} />
-            <span>{isRefreshingGps ? 'Mencari GPS...' : 'Refresh GPS'}</span>
-          </Button>
-        </div>
-
         {/* Radius Validation Warning / Status */}
         {distanceToTarget !== null && (
           <div
@@ -247,6 +232,8 @@ export function TugasLogForm({
           longitude={coordinates?.longitude}
           accuracy={coordinates?.accuracy}
           onLocationChange={(lat, lng, acc) => setCoordinates({ latitude: lat, longitude: lng, accuracy: acc })}
+          targetLocation={targetLocation}
+          targetRadiusMeter={MAX_RADIUS_TUGAS_METER}
         />
       </div>
 
