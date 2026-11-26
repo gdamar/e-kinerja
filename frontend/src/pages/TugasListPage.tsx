@@ -131,14 +131,17 @@ export default function TugasListPage() {
               </h3>
               <div className="space-y-3">
                 {tasks.map((t) => (
-                  <Card key={t.id}>
+                  <Card
+                    key={t.id}
+                    className="cursor-pointer hover:border-primary/50 transition-colors group"
+                    onClick={() => navigate(ROUTES.TUGAS_DETAIL.replace(':id', t.id))}
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div
-                          className="flex-1 min-w-0 cursor-pointer"
-                          onClick={() => navigate(ROUTES.TUGAS_DETAIL.replace(':id', t.id))}
-                        >
-                          <h4 className="font-medium text-foreground truncate">{t.judul_tugas}</h4>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {t.judul_tugas}
+                          </h4>
                           <p className="text-sm text-muted-foreground truncate">{t.alamat}</p>
                           {isOperator && t.petugas && (
                             <p className="text-xs text-muted-foreground mt-1">

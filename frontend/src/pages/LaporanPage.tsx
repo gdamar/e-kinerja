@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Download, Filter, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LaporanMap, LaporanMapPlaceholder } from '@/components/features/laporan';
 import { exportToCSV } from '@/lib/export';
 import { formatDate } from '@/lib/utils';
+import { ROUTES, STATUS_TUGAS } from '@/lib/constants';
 
 export default function LaporanPage() {
   const [startDate, setStartDate] = useState('');
@@ -179,33 +182,42 @@ export default function LaporanPage() {
               Tidak ada data tugas
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {laporanData?.tugas.map((tugas) => (
-                <div
+                <Link
                   key={tugas.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  to={ROUTES.TUGAS_DETAIL.replace(':id', tugas.id)}
+                  className="block group"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{tugas.judul_tugas}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {tugas.alamat}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(tugas.tanggal_tugas)} • {tugas.petugas?.nama_phl || '-'}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      tugas.status_tugas === 'Selesai'
-                        ? 'bg-status-success-bg text-status-success'
-                        : tugas.status_tugas === 'Proses'
-                        ? 'bg-status-warning-bg text-status-warning'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {tugas.status_tugas}
-                  </span>
-                </div>
+                  <Card className="cursor-pointer hover:border-primary/50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {tugas.judul_tugas}
+                          </h4>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {tugas.alamat}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(tugas.tanggal_tugas)} • {tugas.petugas?.nama_phl || '-'}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            tugas.status_tugas === STATUS_TUGAS.SELESAI
+                              ? 'success'
+                              : tugas.status_tugas === STATUS_TUGAS.MENUNGGU
+                              ? 'warning'
+                              : 'default'
+                          }
+                        >
+                          {tugas.status_tugas}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}
