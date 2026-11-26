@@ -289,10 +289,12 @@ export function LocationPicker({
           <MapContainer
             center={mapPosition}
             zoom={16}
-            scrollWheelZoom={false}
+            scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
-          >
+            whenCreated={map => {
+              map.getContainer().addEventListener('wheel', (e) => e.stopPropagation(), { passive: true });
+            }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

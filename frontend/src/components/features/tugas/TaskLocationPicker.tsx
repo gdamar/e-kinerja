@@ -230,29 +230,27 @@ export function TaskLocationPicker({
               if (suggestions.length > 0) setShowDropdown(true);
             }}
             placeholder="Ketik alamat atau cari tempat (misal: Jl. Sudirman)..."
-            error={error}
-            disabled={disabled}
-            className="pr-10"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            {isSearching ? (
+            icon={isSearching ? (
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
             ) : (
               <Search className="h-4 w-4" />
             )}
-          </div>
+            error={error}
+            disabled={disabled}
+            className="pr-10"
+          />
         </div>
 
         {/* Dropdown Recommendations */}
         {showDropdown && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-white shadow-xl">
+          <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-white shadow-xl">
             <div className="p-1">
               {suggestions.map((item) => (
                 <button
                   key={item.place_id}
                   type="button"
                   onClick={() => handleSelectSuggestion(item)}
-                  className="w-full text-left px-3 py-2 text-xs rounded-sm hover:bg-green-100 hover:text-accent-foreground flex items-start gap-2 transition-colors cursor-pointer"
+                  className="w-full text-left px-3 py-2 text-xs rounded-sm hover:bg-accent hover:text-accent-foreground flex items-start gap-2 transition-colors cursor-pointer"
                 >
                   <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                   <span className="line-clamp-2 leading-relaxed">{item.display_name}</span>
