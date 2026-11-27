@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Search, Loader2, Navigation } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import L from 'leaflet';
 
 // Fix Leaflet marker icons in bundle
@@ -63,7 +65,6 @@ export function TaskLocationPicker({
   const [suggestions, setSuggestions] = useState<NominatimSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Default coordinate (Jakarta center if not set)
   const currentLat = latitude ?? -6.2;
@@ -79,17 +80,6 @@ export function TaskLocationPicker({
   useEffect(() => {
     setQuery(value || '');
   }, [value]);
-
-  // Handle clicking outside of dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Search address using Nominatim OpenStreetMap with debounced effect
   useEffect(() => {
@@ -220,46 +210,57 @@ export function TaskLocationPicker({
       </div>
 
       {/* Search Input with Autocomplete Dropdown */}
-      <div className="relative z-30" ref={dropdownRef}>
-        <div className="relative flex items-center">
-          <Input
-            id="alamat"
-            value={query}
-            onChange={handleInputChange}
-            onFocus={() => {
-              if (suggestions.length > 0) setShowDropdown(true);
-            }}
-            placeholder="Ketik alamat atau cari tempat (misal: Jl. Sudirman)..."
-            icon={isSearching ? (
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            error={error}
-            disabled={disabled}
-            className="pr-10"
-          />
-        </div>
-
-        {/* Dropdown Recommendations */}
-        {showDropdown && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-white shadow-xl">
-            <div className="p-1">
-              {suggestions.map((item) => (
-                <button
-                  key={item.place_id}
-                  type="button"
-                  onClick={() => handleSelectSuggestion(item)}
-                  className="w-full text-left px-3 py-2 text-xs rounded-sm hover:bg-accent hover:text-accent-foreground flex items-start gap-2 transition-colors cursor-pointer"
-                >
-                  <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                  <span className="line-clamp-2 leading-relaxed">{item.display_name}</span>
-                </button>
-              ))}
-            </div>
+      <Popover
+        open={showDropdown && suggestions.length > 0}
+        onOpenChange={setShowDropdown}
+      >
+        <PopoverAnchor asChild>
+          <div>
+            <Input
+              id="alamat"
+              value={query}
+              onChange={handleInputChange}
+              onFocus={() => {
+                if (suggestions.length > 0) setShowDropdown(true);
+              }}
+              placeholder="Ketik alamat atau cari tempat (misal: Jl. Sudirman)..."
+              icon={isSearching ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              error={error}
+              disabled={disabled}
+              className="pr-10"
+            />
           </div>
-        )}
-      </div>
+        </PopoverAnchor>
+
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command shouldFilter={false}>
+            <CommandList className="max-h-60">
+              <CommandGroup>
+                {suggestions.map((item) => (
+                  <CommandItem
+                    key={item.place_id}
+                    value={String(item.place_id)}
+                    onSelect={() => handleSelectSuggestion(item)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    className="flex items-start gap-2 px-3 py-2 text-xs cursor-pointer"
+                  >
+                    <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="line-clamp-2 leading-relaxed">{item.display_name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
 
       {/* Coordinate & Map Helper */}
       <div className="rounded-lg overflow-hidden border bg-muted/20 relative z-10">
