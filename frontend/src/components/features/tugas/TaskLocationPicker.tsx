@@ -2,11 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Search, Loader2, Navigation } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete';
 import L from 'leaflet';
 
 // Fix Leaflet marker icons in bundle
@@ -64,7 +62,6 @@ export function TaskLocationPicker({
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState<NominatimSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
 
   // Default coordinate (Jakarta center if not set)
   const currentLat = latitude ?? -6.2;
@@ -86,7 +83,6 @@ export function TaskLocationPicker({
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 3) {
       setSuggestions([]);
-      setShowDropdown(false);
       setIsSearching(false);
       return;
     }
@@ -110,7 +106,6 @@ export function TaskLocationPicker({
         if (res.ok) {
           const data: NominatimSearchResult[] = await res.json();
           setSuggestions(data);
-          setShowDropdown(data.length > 0);
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') {
@@ -128,21 +123,26 @@ export function TaskLocationPicker({
     };
   }, [query]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-  };
-
   const handleSelectSuggestion = (item: NominatimSearchResult) => {
     const lat = parseFloat(item.lat);
     const lon = parseFloat(item.lon);
     setQuery(item.display_name);
-    setShowDropdown(false);
     onChange({
       alamat: item.display_name,
       latitude: lat,
       longitude: lon,
     });
   };
+
+  const suggestionOptions: AutocompleteOption<NominatimSearchResult>[] = useMemo(
+    () =>
+      suggestions.map((item) => ({
+        value: String(item.place_id),
+        label: item.display_name,
+        data: item,
+      })),
+    [suggestions]
+  );
 
   // Reverse geocode when clicking on map
   const handleMapClick = async (lat: number, lng: number) => {
@@ -210,57 +210,29 @@ export function TaskLocationPicker({
       </div>
 
       {/* Search Input with Autocomplete Dropdown */}
-      <Popover
-        open={showDropdown && suggestions.length > 0}
-        onOpenChange={setShowDropdown}
-      >
-        <PopoverAnchor asChild>
-          <div>
-            <Input
-              id="alamat"
-              value={query}
-              onChange={handleInputChange}
-              onFocus={() => {
-                if (suggestions.length > 0) setShowDropdown(true);
-              }}
-              placeholder="Ketik alamat atau cari tempat (misal: Jl. Sudirman)..."
-              icon={isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              error={error}
-              disabled={disabled}
-              className="pr-10"
-            />
-          </div>
-        </PopoverAnchor>
-
-        <PopoverContent
-          className="w-[--radix-popover-trigger-width] p-0"
-          align="start"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-        >
-          <Command shouldFilter={false}>
-            <CommandList className="max-h-60">
-              <CommandGroup>
-                {suggestions.map((item) => (
-                  <CommandItem
-                    key={item.place_id}
-                    value={String(item.place_id)}
-                    onSelect={() => handleSelectSuggestion(item)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    className="flex items-start gap-2 px-3 py-2 text-xs cursor-pointer"
-                  >
-                    <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                    <span className="line-clamp-2 leading-relaxed">{item.display_name}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <Autocomplete<NominatimSearchResult>
+        id="alamat"
+        value={query}
+        onValueChange={setQuery}
+        options={suggestionOptions}
+        shouldFilter={false}
+        isLoading={isSearching}
+        placeholder="Ketik alamat atau cari tempat (misal: Jl. Sudirman)..."
+        error={error}
+        disabled={disabled}
+        itemClassName="flex items-start gap-2 px-3 py-2 text-xs"
+        onSelect={(option) => {
+          if (option.data) {
+            handleSelectSuggestion(option.data);
+          }
+        }}
+        renderOption={(option) => (
+          <>
+            <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+            <span className="line-clamp-2 leading-relaxed">{option.label}</span>
+          </>
+        )}
+      />
 
       {/* Coordinate & Map Helper */}
       <div className="rounded-lg overflow-hidden border bg-muted/20 relative z-10">

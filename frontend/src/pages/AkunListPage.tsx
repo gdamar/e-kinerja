@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Autocomplete } from '@/components/ui/autocomplete';
 import {
   Select,
   SelectContent,
@@ -53,6 +54,7 @@ export default function AkunListPage() {
     password: '',
     id_petugas: '',
   });
+  const [petugasSearch, setPetugasSearch] = useState('');
 
   const hasActiveFilters = filters.role !== null || filters.status !== null;
 
@@ -125,6 +127,7 @@ export default function AkunListPage() {
       });
       setCreateDialogOpen(false);
       setCreateForm({ email: '', password: '', id_petugas: '' });
+      setPetugasSearch('');
     } catch (err: any) {
       toast({
         title: 'Gagal',
@@ -139,10 +142,17 @@ export default function AkunListPage() {
     (p) => !akunList?.some((u) => u.profile?.id === p.id)
   ) || [];
 
+  const petugasOptions = availablePetugas.map((petugas) => ({
+    value: petugas.id,
+    label: `${petugas.nama_phl} - ${petugas.email}`,
+    keywords: [petugas.nama_phl, petugas.email, petugas.nik].filter(Boolean),
+    data: petugas,
+  }));
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Manage Akun"
+        title="Manajemen Akun"
         description="Kelola akun autentikasi dan akses user"
         actions={
           <div className="flex gap-2">
@@ -153,7 +163,16 @@ export default function AkunListPage() {
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <Dialog
+              open={createDialogOpen}
+              onOpenChange={(open) => {
+                setCreateDialogOpen(open);
+                if (!open) {
+                  setPetugasSearch('');
+                  setCreateForm({ email: '', password: '', id_petugas: '' });
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
@@ -194,26 +213,27 @@ export default function AkunListPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="petugas">Petugas</Label>
-                    <Select
-                      value={createForm.id_petugas}
-                      onValueChange={(v) =>
-                        setCreateForm((f) => ({ ...f, id_petugas: v }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih petugas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availablePetugas.map((petugas) => (
-                          <SelectItem key={petugas.id} value={petugas.id}>
-                            {petugas.nama_phl} - {petugas.email}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Autocomplete
+                      id="petugas"
+                      value={petugasSearch}
+                      onValueChange={(val) => {
+                        setPetugasSearch(val);
+                        if (!val) {
+                          setCreateForm((f) => ({ ...f, id_petugas: '' }));
+                        }
+                      }}
+                      options={petugasOptions}
+                      onSelect={(option) => {
+                        setCreateForm((f) => ({ ...f, id_petugas: option.value }));
+                        setPetugasSearch(option.label);
+                      }}
+                      placeholder="Cari nama, NIK, atau email petugas..."
+                      emptyMessage="Petugas tidak ditemukan"
+                      modal
+                    />
                   </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-0">
                   <Button
                     variant="outline"
                     onClick={() => setCreateDialogOpen(false)}
@@ -451,7 +471,7 @@ export default function AkunListPage() {
                               />
                             </div>
                           </div>
-                          <DialogFooter>
+                          <DialogFooter className="gap-2 sm:gap-0">
                             <Button
                               variant="outline"
                               onClick={() => {
