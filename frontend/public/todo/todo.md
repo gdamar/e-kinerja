@@ -18,10 +18,14 @@
 
 - Laporan
   - [ ] Hapus metrik status tugas
-  - [ ] Card laporan dapat diklik untuk melihat detail pengerjaan tugas
+  - [x] Card laporan dapat diklik untuk melihat detail pengerjaan tugas
 
 - Akun
-  - [-] Ubah komponen dropdown petugasnya jadi komponen combobox
+  - [x] Ubah komponen dropdown petugasnya jadi komponen combobox(popover + command)
+  - [ ] Data akun gabisa difetch(edge function belom kedeploy)
+
+- Penilaian
+  - [ ] Aksi data penilaian diganti jadi hold di halaman mobile
 
 - Service Workers
   - [ ] Offline cache untuk:
